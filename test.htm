@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>HTML5 Audio Game</title>
+	<script src="game.js"></script>
+	<script type="text/javascript" src="stats.min.js"></script>
+
+	<style>
+
+		body {
+			margin: 0;
+			padding: 0;
+			border: 0;
+			font-size: 100%;
+			font: inherit;
+			vertical-align: baseline;
+		}
+		h1 {
+			font-size: 4em;
+			font-weight: bold;
+			line-height: 1em;
+			margin-bottom: .2em;
+			margin-top: .75em;
+		}
+		p {
+			margin: .75em 2em;
+			line-height: 1.3em;
+		}
+		a {
+			text-decoration: none;
+			color: #43A4FF;
+		}
+		#intro {
+			font-size: 1.3em;
+			background: rgba(0,0,0,.5);
+			width: 100%;
+			height: 100%;
+			position: fixed;
+			text-align: center;
+			z-index: 5;
+			/* display: none; */
+			color: #fff;
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+		}
+
+		#content {
+			text-align: center;
+		}
+		.btn {
+
+			color: #fff;
+			background-color: #5cb85c;
+			border-color: #4cae4c;
+
+			display: inline-block;
+			padding: 8px 200px;
+			margin-bottom: 0;
+			font-size: 38px;
+			font-weight: 400;
+			line-height: 1.33;
+			text-align: center;
+			white-space: nowrap;
+			vertical-align: middle;
+			-ms-touch-action: manipulation;
+			touch-action: manipulation;
+			cursor: pointer;
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+			background-image: none;
+			border: 1px solid transparent;
+			border-radius: 6px;
+		}
+		.btn:hover {
+		  color: #fff;
+		  background-color: #449d44;
+		  border-color: #398439;
+		}
+		.titleContent #start {
+			margin-bottom: 0.5em;
+			margin-top: 2em;
+		}
+
+
+		#endScreen {
+		  display: none; 
+		  background: rgba(0,0,0,.5);
+		  position: fixed;
+		  width: 100%;
+		  height: 100%;
+		  top: 0;
+		  left: 0;
+		  z-index: 10;
+		  color: #fff;
+		  font-size: 1.3em;
+		  text-align: center;
+		}
+		#endScreen .content {
+		  width: 63%;
+		  margin: 0 auto;
+		}
+		#endScreen h2 {
+		  font-weight: bold;
+		  margin-top: 1em;
+		  margin-bottom: .25em;
+		  font-size: 3em;
+		  line-height: 1em;
+		}
+
+
+		.cover div{
+			position: fixed;
+			height: 100%;
+			width: 100%;;	
+			left: 0px;
+			top: 0px;
+			z-index: -1;
+		}
+		.bg{
+			opacity: 0.6;
+			background: url(4.jpg) no-repeat center center fixed;
+			background-size: cover;
+			-moz-background-size: cover;
+			-webkit-background-size: cover;
+			-o-background-size: cover;
+		}
+		.bg_cover{
+			background-color: rgba(223, 231, 200, 0.5);	
+		}
+		.blur {
+			-moz-filter: blur(10px);
+			-webkit-filter: blur(10px);
+			-o-filter: blur(10px);
+			-ms-filter: blur(10px);
+			filter: blur(10px);
+		}
+	</style>
+</head>
+<body>
+	<div class="cover">
+		<div class="bg_cover"></div>
+		<div class="blur bg "></div>
+	</div>
+
+	<div id="intro">
+		<h1>dd music game</h1>
+		<div class="titleContent">
+			<p>it is a traditional music game, with a strong sense of rhythm.</p>
+			<a href="#" id="start" class="btn">Start!</a>
+			<p class="info visible-desktop">Controls: keys D, F, J, K.</p>
+		</div>
+	</div>
+
+	<div id="content">
+
+	</div>
+
+	<div id="endScreen">
+		<div class="content">
+			<h2>GREAT WORK!</h2>
+			<p>Final score: <span id="finalScore">0</span></p>
+			<p>Result: <span id="result"></span></p>
+			<a href="#" id="reset" class="btn">Play!</a>
+		</div>
+	</div>
+
+	<script>
+		var stats = new Stats();
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.top = '0px';
+		stats.domElement.style.zIndex = 100;
+		var container = document.querySelector('body');
+		container.appendChild( stats.domElement );
+
+		var test = '[[{"time":3.6568349999999996,"position":68},{"time":6.895746,"position":68},{"time":9.066629,"position":68},{"time":10.181093,"position":68},{"time":11.26073,"position":68},{"time":15.590887,"position":68},{"time":17.773379,"position":68},{"time":20.025525,"position":68},{"time":21.639176,"position":68},{"time":23.810059000000003,"position":68},{"time":25.481755,"position":68},{"time":29.359161,"position":68},{"time":33.108868,"position":68},{"time":34.768955,"position":68},{"time":36.347779,"position":68},{"time":26.560405233739935,"position":68},{"time":30.962899000000004,"position":68}],[{"time":3.157648,"position":70},{"time":5.316922,"position":70},{"time":7.522632,"position":70},{"time":12.351976,"position":70},{"time":14.012063000000001,"position":70},{"time":15.068482,"position":70},{"time":16.740178,"position":70},{"time":18.899452,"position":70},{"time":22.730421999999997,"position":70},{"time":31.471999,"position":70},{"time":20.56818399590883,"position":70},{"time":24.393869000000002,"position":70},{"time":27.131599,"position":70},{"time":28.790948,"position":70},{"time":34.234038,"position":70},{"time":35.272045,"position":70}],[{"time":2.762942,"position":74},{"time":4.782908,"position":74},{"time":5.885763,"position":74},{"time":8.021819,"position":74},{"time":9.647078999999998,"position":74},{"time":10.703498,"position":74},{"time":13.489657999999999,"position":74},{"time":14.569295,"position":74},{"time":16.171337,"position":74},{"time":18.34222,"position":74},{"time":22.208016999999998,"position":74},{"time":26.062205,"position":74},{"time":28.244696999999995,"position":74},{"time":29.904784,"position":74},{"time":32.551636,"position":74},{"time":36.870184,"position":74},{"time":31.47054910477425,"position":74},{"time":20.56818399590883,"position":74},{"time":24.393869000000002,"position":74},{"time":27.131599,"position":74},{"time":28.790948,"position":74},{"time":34.234038,"position":74},{"time":35.272045,"position":74}],[{"time":4.225676,"position":75},{"time":6.396559,"position":75},{"time":8.567442,"position":75},{"time":11.829570999999998,"position":75},{"time":12.909208,"position":75},{"time":17.262583,"position":75},{"time":19.468293,"position":75},{"time":21.105162,"position":75},{"time":23.264436,"position":75},{"time":24.970959000000004,"position":75},{"time":26.561392,"position":75},{"time":27.641029,"position":75},{"time":30.427189,"position":75},{"time":32.029231,"position":75},{"time":33.654491,"position":75},{"time":35.836983,"position":75},{"time":20.018128810975703,"position":75},{"time":34.772600355691154,"position":75},{"time":15.58414634146359,"position":75},{"time":29.362012519408395,"position":75},{"time":30.962899000000004,"position":75}]]';
+
+		//DDMUG
+		var stage = new DDMUG.Stage({width: window.innerHeight>window.innerWidth?window.innerWidth-5:600, height: window.innerHeight-5});
+		stage.stageRender.fpsStatus = stats;//配置记录帧率的stats
+		document.querySelector('#content').appendChild( stage.domElement );
+		stage.init("Last Kiss.mp3", test);
+
+		document.querySelector('#start').onclick = function(){
+			document.querySelector('#intro').style.display='none';
+			stage.play();
+			return false;
+		};
+
+		stage.audio.addEventListener("ended", function(e) {
+			//stage.stop();
+			document.querySelector('#finalScore').innerText = stage.score;
+			document.querySelector('#result').innerText = JSON.stringify(stage.result);
+			document.querySelector('#endScreen').style.display='block';
+		});
+
+		//由于逻辑和绘制是2个独立的循环，绘制是RequestAnimationFrame所以页面不可见时会自动停止，但逻辑循环是setTimeout，因此需要在页面不可见时手动停止。否则当页面切回来时，会堆积大量要渲染的元素。
+		//HTML5提供了Page Visibility的API
+		function handleVisibilityChange() {
+			if (document.webkitHidden) {
+				stage.pause();
+				//console.log('....hidden....')
+			}else{
+				stage.resume();
+				//console.log('....visible....')
+			}
+		}
+		document.addEventListener("webkitvisibilitychange", handleVisibilityChange, false);
+	</script>
+</body>
+</html>
