@@ -1,10 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
 	<title>HTML5 Audio Game</title>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> 
+	
 	<script src="game.js"></script>
 	<script type="text/javascript" src="stats.min.js"></script>
+	<script>
+		//百度统计
+		var _hmt = _hmt || [];
+		(function() {
+		  var hm = document.createElement("script");
+		  hm.src = "//hm.baidu.com/hm.js?178fa03ad97a1ea0aeaed4b0e73592b7";
+		  var s = document.getElementsByTagName("script")[0]; 
+		  s.parentNode.insertBefore(hm, s);
+		})();
+	</script>
 
 	<style>
 
@@ -52,9 +65,10 @@
 			color: #fff;
 			background-color: #5cb85c;
 			border-color: #4cae4c;
-
+			width: 80%;
+			max-width: 400px;
 			display: inline-block;
-			padding: 8px 200px;
+			padding: 8px;
 			margin-bottom: 0;
 			font-size: 38px;
 			font-weight: 400;
@@ -161,8 +175,15 @@
 		<div class="content">
 			<h2>GREAT WORK!</h2>
 			<p>Final score: <span id="finalScore">0</span></p>
-			<p>Result: <span id="result"></span></p>
-			<a href="#" id="reset" class="btn">Play!</a>
+			<p>Result: <span id="result" style="word-wrap: break-word; width: 100%;"></span></p>
+
+
+			<div style="display: inline-block;">
+				<!-- 百度分享 -->
+				<div class="bdsharebuttonbox"><a href="#" class="bds_more" data-cmd="more"></a><a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博"></a><a href="#" class="bds_renren" data-cmd="renren" title="分享到人人网"></a><a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_fbook" data-cmd="fbook" title="分享到Facebook"></a></div>
+				<script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"1","bdSize":"24"},"share":{},"image":{"viewList":["qzone","tsina","tqq","renren","weixin","fbook"],"viewText":"分享到：","viewSize":"16"},"selectShare":{"bdContainerClass":null,"bdSelectMiniList":["qzone","tsina","tqq","renren","weixin","fbook"]}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];</script>
+
+			</div>
 		</div>
 	</div>
 
@@ -180,11 +201,13 @@
 		var stage = new DDMUG.Stage({width: window.innerHeight>window.innerWidth?window.innerWidth-5:600, height: window.innerHeight-5});
 		stage.stageRender.fpsStatus = stats;//配置记录帧率的stats
 		document.querySelector('#content').appendChild( stage.domElement );
-		stage.init("Last Kiss.mp3", test);
+		stage.init("http://7xkuwl.com1.z0.glb.clouddn.com/Last%20Kiss.mp3", test);
 
 		document.querySelector('#start').onclick = function(){
-			document.querySelector('#intro').style.display='none';
-			stage.play();
+			if(stage.initialized){
+				document.querySelector('#intro').style.display='none';
+				stage.play();
+			}
 			return false;
 		};
 
@@ -195,18 +218,7 @@
 			document.querySelector('#endScreen').style.display='block';
 		});
 
-		//由于逻辑和绘制是2个独立的循环，绘制是RequestAnimationFrame所以页面不可见时会自动停止，但逻辑循环是setTimeout，因此需要在页面不可见时手动停止。否则当页面切回来时，会堆积大量要渲染的元素。
-		//HTML5提供了Page Visibility的API
-		function handleVisibilityChange() {
-			if (document.webkitHidden) {
-				stage.pause();
-				//console.log('....hidden....')
-			}else{
-				stage.resume();
-				//console.log('....visible....')
-			}
-		}
-		document.addEventListener("webkitvisibilitychange", handleVisibilityChange, false);
+		
 	</script>
 </body>
 </html>

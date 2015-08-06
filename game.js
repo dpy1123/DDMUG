@@ -274,28 +274,58 @@ DDMUG.Stage = function(parameters){
 
 		_stageRender.domElement.addEventListener(mousedown, function(e){
 			e.preventDefault();
-			var mouse = { 
-				x: (isMobile?e.changedTouches[0].pageX:e.pageX) - canvasPosition.x, 
-				y: (isMobile?e.changedTouches[0].pageY:e.pageY) - canvasPosition.y  
+			if(isMobile){
+				for (var i=0; i < e.changedTouches.length; i++) { 
+					var touch = e.changedTouches[i];
+					var mouse = { 
+						x: touch.pageX - canvasPosition.x, 
+						y: touch.pageY - canvasPosition.y 
+					}
+					for (var i=0; i < _stageRender.elements.length; i++) { 
+						if(_stageRender.elements[i] instanceof DDMUG.EventElement)
+							_stageRender.elements[i].onMouseDown(mouse.x, mouse.y, _self); 
+					} 
+				}
+			}else{
+				var mouse = { 
+					x: e.pageX - canvasPosition.x, 
+					y: e.pageY - canvasPosition.y  
+				}
+						
+				for (var i=0; i < _stageRender.elements.length; i++) { 
+					if(_stageRender.elements[i] instanceof DDMUG.EventElement)
+						_stageRender.elements[i].onMouseDown(mouse.x, mouse.y, _self); 
+				} 
 			}
-					
-			for (var i=0; i < _stageRender.elements.length; i++) { 
-				if(_stageRender.elements[i] instanceof DDMUG.EventElement)
-					_stageRender.elements[i].onMouseDown(mouse.x, mouse.y, _self); 
-			} 
+			
 			return false;
 		});
 
 		_stageRender.domElement.addEventListener(mouseup, function(e){
 			e.preventDefault();
-			var mouse = { 
-				x: (isMobile?e.changedTouches[0].pageX:e.pageX) - canvasPosition.x, 
-				y: (isMobile?e.changedTouches[0].pageY:e.pageY) - canvasPosition.y 
+			if(isMobile){
+				for (var i=0; i < e.changedTouches.length; i++) { 
+					var touch = e.changedTouches[i];
+					var mouse = { 
+						x: touch.pageX - canvasPosition.x, 
+						y: touch.pageY - canvasPosition.y 
+					}
+					for (var i=0; i < _stageRender.elements.length; i++) { 
+						if(_stageRender.elements[i] instanceof DDMUG.EventElement)
+							_stageRender.elements[i].onMouseUp(mouse.x, mouse.y, _self); 
+					} 
+				}
+			}else{
+				var mouse = { 
+					x: e.pageX - canvasPosition.x, 
+					y: e.pageY - canvasPosition.y 
+				}
+				for (var i=0; i < _stageRender.elements.length; i++) { 
+					if(_stageRender.elements[i] instanceof DDMUG.EventElement)
+						_stageRender.elements[i].onMouseUp(mouse.x, mouse.y, _self); 
+				} 
 			}
-			for (var i=0; i < _stageRender.elements.length; i++) { 
-				if(_stageRender.elements[i] instanceof DDMUG.EventElement)
-					_stageRender.elements[i].onMouseUp(mouse.x, mouse.y, _self); 
-			} 
+		
 			return false;
 		});
 
@@ -309,13 +339,22 @@ DDMUG.Stage = function(parameters){
 		_audio = new Audio('audio'); 
 		_audio.src = musicUrl;
 		var that = this;
-		//_audio.addEventListener("canplay", function(e) {
+		_audio.addEventListener("canplaythrough", function(e) {//canplaythrough	当浏览器可在不因缓冲而停顿的情况下进行播放时触发。但在实际情况下，“canplaythrough”事件在移动端Chrome上，依然会在网速差的情况下，因加载资源导致卡顿。
+			//console.log('canplaythrough, audio.readyState: '+_audio.readyState);//_audio.readyState=4	代表HAVE_ENOUGH_DATA,可用数据足以开始播放。也是依然会有同样的问题。
 			buildStage();
 			bindMouseEvent();
 			bindKey();
 			that.musicMap = buildMusicMap(musicMap);
-			
-		//});
+			that.initialized = true;
+		});
+		/*_audio.addEventListener("progress", function(e) {//这个是可以严格验证音频是否加载完成，但浏览器在load时一般只会部分加载，在播放过程中再不断加载内容，因此不能这样做。
+			var buffered = 0;
+			for(var i = 0; i < _audio.buffered.length; i ++) {
+				buffered += _audio.buffered.end(i) - _audio.buffered.start(i);
+			}
+			//console.log(_audio.buffered)
+			if(buffered >= _audio.duration) that.initialized = true;
+		});*/
 		_audio.addEventListener("ended", function(e) {
 			that.stop();
 		});
@@ -324,7 +363,20 @@ DDMUG.Stage = function(parameters){
 		this.start();
 	};
 
-	
+
+	//由于逻辑和绘制是2个独立的循环，绘制是RequestAnimationFrame所以页面不可见时会自动停止，但逻辑循环是setTimeout，因此需要在页面不可见时手动停止。否则当页面切回来时，会堆积大量要渲染的元素。
+	//HTML5提供了Page Visibility的API
+	function handleVisibilityChange() {
+		if (document.webkitHidden) {
+			_self.pause();
+			//console.log('....hidden....')
+		}else{
+			_self.resume();
+			//console.log('....visible....')
+		}
+	}
+	document.addEventListener("webkitvisibilitychange", handleVisibilityChange, false);
+
 
 	var _logicTimer,
 		_logicFps = 60;//逻辑循环的帧数
@@ -394,6 +446,7 @@ DDMUG.Stage = function(parameters){
 
 	var _playing = false;
 	this.play = function(){
+		if(!this.initialized) return;//未初始化完成，不能play
 		_stageRender.domElement.focus();
 
 		_startTime = _audio.currentTime;
@@ -435,7 +488,7 @@ DDMUG.Stage = function(parameters){
 
 
 	this.pause = function(){
-		if(!_playing) return;
+		if(!_started || !_playing) return;
 		if(!_audio.paused) _audio.pause();
 
 		if(_logicTimer != null){
@@ -446,7 +499,7 @@ DDMUG.Stage = function(parameters){
 
 	}
 	this.resume = function(){
-		if(!_playing) return;
+		if(!_started || !_playing) return;
 
 		_audio.play();
 
