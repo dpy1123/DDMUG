@@ -47,7 +47,7 @@ document.querySelector('#start').onclick = function(){
 };
 ```
 ##setup editor
-since editor uses AudioContext to decode/analysis music, you can only run editor with recent bowers like Chrome/Firefox/Edge, ie <= 11 not supported.
+since editor uses AudioContext to decode/analysis music, you can only run editor with recent bowers like Chrome/Firefox/Edge, ie <= 11 not supported.<br>
 1.import js files.
 ```javascript
 <script src="editor.js"></script>
