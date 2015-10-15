@@ -4,6 +4,7 @@
 	<meta charset="utf-8">
 	<title>HTML5 Audio Game</title>
 	<script src="editor.js"></script>
+	<script src="analyzer.js"></script>
 
 </head>
 <body>
@@ -17,7 +18,7 @@
 	var stage = new DDMUG.Edioter({width: window.innerWidth-20, height: window.innerHeight-40});
 	document.body.appendChild( stage.domElement );
 	//stage.init("http://127.0.0.1:8080/yinyue/Last%20Kiss.mp3");//不要用webstorm的httpserver，他不支持分段，导致每次更改currentTime都重新开始播放。使用tomcat或者nodejs+express。
-	stage.init("Last Kiss.mp3");
+	stage.init("おちゃめ机能 蓮.mp3");
 	//stage.start();	
 	</script>
 

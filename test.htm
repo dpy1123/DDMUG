@@ -4,23 +4,21 @@
 	<title>HTML5 Audio Game</title>
 
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
 	
-	<script src="game.js"></script>
+	<script type="text/javascript" src="game.js"></script>
 	<script type="text/javascript" src="stats.min.js"></script>
-	<script>
-		//百度统计
-		var _hmt = _hmt || [];
-		(function() {
-		  var hm = document.createElement("script");
-		  hm.src = "//hm.baidu.com/hm.js?178fa03ad97a1ea0aeaed4b0e73592b7";
-		  var s = document.getElementsByTagName("script")[0]; 
-		  s.parentNode.insertBefore(hm, s);
-		})();
-	</script>
+	<script type="text/javascript" src="Loader.js"></script>
+
 
 	<style>
+		*{
+			/* Touch detection for Windows 8 */
+			-ms-touch-action: none;
 
+			/* IE 11 on Windows Phone 8.1*/
+			touch-action: none;
+		 }
 		body {
 			margin: 0;
 			padding: 0;
@@ -30,7 +28,7 @@
 			vertical-align: baseline;
 		}
 		h1 {
-			font-size: 4em;
+			font-size: 3em;
 			font-weight: bold;
 			line-height: 1em;
 			margin-bottom: .2em;
@@ -92,9 +90,16 @@
 		  background-color: #449d44;
 		  border-color: #398439;
 		}
+
+		@media (min-height: 400px) {
+			.titleContent #start {
+				margin-top: 2em;
+			}
+		}
+
 		.titleContent #start {
 			margin-bottom: 0.5em;
-			margin-top: 2em;
+			/*margin-top: 2em;*/
 		}
 
 
@@ -194,14 +199,26 @@
 		stats.domElement.style.zIndex = 100;
 		var container = document.querySelector('body');
 		container.appendChild( stats.domElement );
-
-		var test = '[[{"time":3.6568349999999996,"position":68},{"time":6.895746,"position":68},{"time":9.066629,"position":68},{"time":10.181093,"position":68},{"time":11.26073,"position":68},{"time":15.590887,"position":68},{"time":17.773379,"position":68},{"time":20.025525,"position":68},{"time":21.639176,"position":68},{"time":23.810059000000003,"position":68},{"time":25.481755,"position":68},{"time":29.359161,"position":68},{"time":33.108868,"position":68},{"time":34.768955,"position":68},{"time":36.347779,"position":68},{"time":26.560405233739935,"position":68},{"time":30.962899000000004,"position":68}],[{"time":3.157648,"position":70},{"time":5.316922,"position":70},{"time":7.522632,"position":70},{"time":12.351976,"position":70},{"time":14.012063000000001,"position":70},{"time":15.068482,"position":70},{"time":16.740178,"position":70},{"time":18.899452,"position":70},{"time":22.730421999999997,"position":70},{"time":31.471999,"position":70},{"time":20.56818399590883,"position":70},{"time":24.393869000000002,"position":70},{"time":27.131599,"position":70},{"time":28.790948,"position":70},{"time":34.234038,"position":70},{"time":35.272045,"position":70}],[{"time":2.762942,"position":74},{"time":4.782908,"position":74},{"time":5.885763,"position":74},{"time":8.021819,"position":74},{"time":9.647078999999998,"position":74},{"time":10.703498,"position":74},{"time":13.489657999999999,"position":74},{"time":14.569295,"position":74},{"time":16.171337,"position":74},{"time":18.34222,"position":74},{"time":22.208016999999998,"position":74},{"time":26.062205,"position":74},{"time":28.244696999999995,"position":74},{"time":29.904784,"position":74},{"time":32.551636,"position":74},{"time":36.870184,"position":74},{"time":31.47054910477425,"position":74},{"time":20.56818399590883,"position":74},{"time":24.393869000000002,"position":74},{"time":27.131599,"position":74},{"time":28.790948,"position":74},{"time":34.234038,"position":74},{"time":35.272045,"position":74}],[{"time":4.225676,"position":75},{"time":6.396559,"position":75},{"time":8.567442,"position":75},{"time":11.829570999999998,"position":75},{"time":12.909208,"position":75},{"time":17.262583,"position":75},{"time":19.468293,"position":75},{"time":21.105162,"position":75},{"time":23.264436,"position":75},{"time":24.970959000000004,"position":75},{"time":26.561392,"position":75},{"time":27.641029,"position":75},{"time":30.427189,"position":75},{"time":32.029231,"position":75},{"time":33.654491,"position":75},{"time":35.836983,"position":75},{"time":20.018128810975703,"position":75},{"time":34.772600355691154,"position":75},{"time":15.58414634146359,"position":75},{"time":29.362012519408395,"position":75},{"time":30.962899000000004,"position":75}]]';
+	
 
 		//DDMUG
 		var stage = new DDMUG.Stage({width: window.innerHeight>window.innerWidth?window.innerWidth-5:600, height: window.innerHeight-5});
 		stage.stageRender.fpsStatus = stats;//配置记录帧率的stats
 		document.querySelector('#content').appendChild( stage.domElement );
-		stage.init("http://7xkuwl.com1.z0.glb.clouddn.com/Last%20Kiss.mp3", test);
+
+		var loader = new DD.Loader(true);//load music map with DD.Loader
+		document.querySelector('#content').appendChild(loader.statusDomElement);
+
+		loader.load("ddmug.map.txt", function(data){
+			stage.init("おちゃめ机能 蓮.mp3", data);
+			
+			stage.audio.addEventListener("ended", function(e) {
+				//stage.stop();
+				document.querySelector('#finalScore').innerText = stage.score;
+				document.querySelector('#result').innerText = JSON.stringify(stage.result);
+				document.querySelector('#endScreen').style.display='block';
+			});
+		});
 
 		document.querySelector('#start').onclick = function(){
 			if(stage.initialized){
@@ -211,14 +228,67 @@
 			return false;
 		};
 
-		stage.audio.addEventListener("ended", function(e) {
-			//stage.stop();
-			document.querySelector('#finalScore').innerText = stage.score;
-			document.querySelector('#result').innerText = JSON.stringify(stage.result);
-			document.querySelector('#endScreen').style.display='block';
+	</script>
+	
+	<!-- 
+	<script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
+	<script src="https://cdn.webrtc-experiment.com/screenshot.js"></script>
+	<script>
+		var div = document.createElement('div');
+		div.style.position = 'absolute';
+		div.style.top = '0px';
+		div.style.right = '0px';
+		div.style.zIndex = 100;
+		var btnStart = document.createElement('button');
+		btnStart.id = "record_start";
+		btnStart.innerText = "record";
+		var btnStop = document.createElement('button');
+		btnStop.id = "record_stop";
+		btnStop.innerText = "stop";
+		div.appendChild(btnStart);
+		div.appendChild(btnStop);
+		document.querySelector('#content').appendChild( div );
+		
+		var elementToShare = document.querySelector('body');
+		var recorder = RecordRTC(elementToShare, {
+			type: 'canvas',
+			canvas: {
+				width: 320,
+				height: 240
+			}
 		});
 
+		document.getElementById('record_start').onclick = function() {
+			recorder.startRecording();
+
+			document.getElementById('record_start').disabled = true;
+			setTimeout(function() {
+				document.getElementById('record_stop').disabled = false;
+			}, 1000);
+		};
+		document.getElementById('record_stop').onclick = function() {
+			this.disabled = true;
+			recorder.stopRecording(function(url) {
+				var video = document.createElement('video');
+				video.src = url;
+				video.setAttribute('style', 'height: 100%; position: absolute; top:0;');
+				document.body.appendChild(video);
+				video.controls = true;
+				video.play();
+			});
+		};
 		
+	</script>
+	-->
+	<script>
+		//百度统计
+		var _hmt = _hmt || [];
+		(function() {
+		  var hm = document.createElement("script");
+		  hm.src = "http://hm.baidu.com/hm.js?178fa03ad97a1ea0aeaed4b0e73592b7";
+		  var s = document.getElementsByTagName("script")[0]; 
+		  s.parentNode.insertBefore(hm, s);
+		})();
 	</script>
 </body>
 </html>

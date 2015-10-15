@@ -168,6 +168,13 @@ DDMUG.Edioter = function(parameters){
 			} 
 		});
 
+		_stageRender.domElement.addEventListener('keyup', function(e){
+			var keyCode = e.which;
+			for (var i=0; i < _stageRender.elements.length; i++) { 
+				_stageRender.elements[i].onKeyUp(keyCode, _self); 
+			} 
+		});
+
 	};
 
 	this.init = function(musicUrl){
@@ -342,6 +349,9 @@ DDMUG.EventElement = function(parameters){
 	this.onKeyDown = function(keyCode, context){
 
 	}
+	this.onKeyUp = function(keyCode, context){
+
+	}
 }
 DDMUG.EventElement.prototype = Object.create( DDMUG.Element.prototype );
 DDMUG.EventElement.prototype.constructor = DDMUG.Element;
@@ -444,12 +454,17 @@ DDMUG.Pannel = function(parameters){
 
 	this.tracks = [trackL1, trackL2, trackR1, trackR2];
 
+
+	this.setBPM = function(bpm){//设置bpm
+		this.timeLine.bpm = bpm;
+	}
 	
 	this.update = function(){
 
-		this.timeLine.time = this.audio.audio.currentTime;
+		if(!this.audio.audio.paused  && !pref) {//播放时更新时间并自动拖动时间栏
 
-		if(!this.audio.audio.paused) {//播放时自动拖动时间栏
+			this.timeLine.updateTime(this.audio.audio.currentTime);
+
 			if(this.timeLine.tickerX -_trackLabelWidth > this.timeLine.size.width){
 				var dragX = Math.min(this.timeLine.position.x+this.timeLine.timeToX(this.timeLine.time), this.timeLine.size.width);
 
@@ -511,6 +526,16 @@ DDMUG.Pannel = function(parameters){
 		ctx.restore();
 	};
 
+	function downloadFile(fileName, content){
+		var aLink = document.createElement('a');
+		var blob = new Blob([content]);
+		var evt = document.createEvent("HTMLEvents");
+		evt.initEvent("click", false, false);
+		aLink.download = fileName;
+		aLink.href = URL.createObjectURL(blob);
+		aLink.dispatchEvent(evt);
+	}
+
 	this.export = function(){//导出track
 		console.log('export track: ')
 		var musicMap = [];
@@ -518,6 +543,7 @@ DDMUG.Pannel = function(parameters){
 			musicMap.push(this.tracks[i].export());
 		}
 		console.log(JSON.stringify(musicMap));
+		downloadFile("ddmug.map.txt", JSON.stringify(musicMap));
 	}
 
 	this.importMusicMap = function(musicMapString){//导入
@@ -536,6 +562,22 @@ DDMUG.Pannel = function(parameters){
 		}
 
 		console.log('import track done ')
+	}
+
+	this.analysis = function(url){
+		var analyzer = new DDMUG.Analyzer();
+		var that = this;
+		analyzer.spawnHit = function(i, beatband, time) {
+			time = time - time%(1.0/that.timeLine.bpm);
+			
+			that.tracks[i].keyFrames.push(new DDMUG.KeyFrame({
+					x: that.tracks[i].position.x+_trackLabelWidth+that.timeLine.timeToX(time), 
+					y: that.tracks[i].position.y+that.tracks[i].size.height/2-10/2, 
+					width: 10, height: 10, 
+					time: time, key: that.tracks[i].key,
+					timeLine: that.timeLine, track: that.tracks[i], trackLabelWidth: _trackLabelWidth}));
+		}
+		analyzer.analysis(url);
 	}
 
 
@@ -582,7 +624,9 @@ DDMUG.Pannel = function(parameters){
 		}
 	}
 
+	var pref ;
 	this.onKeyDown = function(keyCode, context){
+		//console.log(keyCode)
 
 		if(keyCode==32){//空格 播放/暂停
 			if(this.audio.audio.paused) 
@@ -595,7 +639,19 @@ DDMUG.Pannel = function(parameters){
 			if(keyCode == this.tracks[i].key){
 				this.tracks[i].onDblClick(this.tracks[i].position.x+_trackLabelWidth+this.timeLine.timeToX(this.timeLine.time), this.tracks[i].position.y+this.tracks[i].size.height/2-10/2, this);
 			}
+		}
 
+		if(keyCode==17){//左Ctrl 按住时开启音频预览模式，像AE一样
+			pref = true;
+			this.audio.audio.currentTime =	this.timeLine.time;
+			this.audio.play();
+		}
+	}
+
+	this.onKeyUp = function(keyCode, context){
+		if(keyCode==17){//左Ctrl
+			pref = false;
+			this.audio.stop();
 		}
 	}
 }
@@ -766,6 +822,8 @@ DDMUG.TimeLine = function(parameters){
 
 	var originalX = this.position.x;//未被移动前的x坐标，用于绘制clip path
 
+	this.bpm = 110;
+
 	this.time = 0;//当前时间
 	this.timelineStart = parameters.timelineStart !== undefined ? parameters.timelineStart : 0;//开始时间 s
 	this.timelineEnd = parameters.timelineEnd !== undefined ? parameters.timelineEnd : 60; //结束时间 s	
@@ -789,6 +847,11 @@ DDMUG.TimeLine = function(parameters){
 		}
 	}
 
+	this.updateTime = function(time){//外部通过此方法来更新time
+
+		this.time = time - time % (1.0/this.bpm);//让时间线吸附在小刻度上
+	}
+
 	this.draw = function(ctx){
 
 		this.update();
@@ -809,21 +872,31 @@ DDMUG.TimeLine = function(parameters){
 		//timeline				 
 		var lastTimeLabelX = 0;   																				 
 		ctx.fillStyle = "#666666";  
-		for(var sec = this.timelineStart; sec < this.timelineEnd; sec++) {                               
-		
+		for(var sec = this.timelineStart; sec < this.timelineEnd; sec++) {        
 			var x = this.timeToX(sec);
-			drawLine(ctx, this.position.x+x, this.position.y, this.position.x+x, this.position.y+_headerHeight*0.3, "#999999"); 
-					   
-			var minutes = Math.floor(sec / 60);
-			var seconds = sec % 60;
-			var time = minutes + ":" + ((seconds < 10) ? "0" : "") + seconds;
 
+			//绘制秒见的小间隔
+			var labelWidth = (this.timeToX(1)-this.timeToX(0))/this.bpm;
+			if(labelWidth >= 5)
+				for(var i=0; i<this.bpm; i++){
+					var offset = i*labelWidth;
+					drawLine(ctx, this.position.x+x+offset, this.position.y, this.position.x+x+offset, i%10==0?this.position.y+_headerHeight*0.25:this.position.y+_headerHeight*0.15, "#999999"); 
+				}
+
+			//绘制秒
+			drawLine(ctx, this.position.x+x, this.position.y, this.position.x+x, this.position.y+_headerHeight*0.4, "#666666");
+
+			//绘制文字label
 			if (x - lastTimeLabelX > 30 || lastTimeLabelX == 0) {
+				var minutes = Math.floor(sec / 60);
+				var seconds = sec % 60;
+				var time = minutes + ":" + ((seconds < 10) ? "0" : "") + seconds;
+
 				var textWidth = ctx.measureText(time).width;
 				ctx.fillText(time, this.position.x+x - textWidth/2, this.position.y+_headerHeight*0.8);    
 				lastTimeLabelX = x;
-			}   
-			sec += 1;
+			}
+
 		}   
 
 		//time ticker
@@ -844,11 +917,10 @@ DDMUG.TimeLine = function(parameters){
 
 
 	this.onMouseMove = function(x, y, context){
-		if(this.dragging){
-
+		if(this.dragging){	
 			var t = this.xToTime(x-this.position.x);
-			this.time = Math.max(this.timelineStart, Math.min(t, this.timelineEnd));  
-
+			t = Math.max(this.timelineStart, Math.min(t, this.timelineEnd));
+			this.updateTime(t);  
 
 			//音频播放seek
 			context.audio.seek(this.time);
@@ -856,14 +928,14 @@ DDMUG.TimeLine = function(parameters){
 	}
 
 
-	var offset = 15;
+	var offset = 15, mapping = 1600;
 	this.timeToX = function(time) { 
 		var timeScale = this.timeScaleObj.timeScale;
-		return offset + time * (timeScale * 200);//scale=1的情况下，1s代表200px
+		return offset + time * (timeScale * mapping);//scale=1的情况下，1s代表1000px
 	}
 	this.xToTime = function(x) { 
 		var timeScale = this.timeScaleObj.timeScale;
-		return (x - offset) / (timeScale * 200);
+		return (x - offset) / (timeScale * mapping);
 	}
 }
 DDMUG.TimeLine.prototype = Object.create( DDMUG.EventElement.prototype );
@@ -895,7 +967,7 @@ DDMUG.TimeScale = function(parameters){
 
 			//更新timeScale
 			var percent = 1 - (x-this.position.x-padding) / (this.size.width - 2*padding);
-			this.timeScale = Math.max(0.01, Math.min(percent, 1));  
+			this.timeScale = Math.max(0.018, Math.min(percent, 1));  
 		
 			//重新设置scrollbar的位移
 			pannel.timeScrollBar.calcThumbPosX(dragX, pannel);

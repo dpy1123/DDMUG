@@ -31,7 +31,7 @@
 
 
 
-var DDMUG = DDMUG || { VISION: '0.1' };
+var DDMUG = DDMUG || { VISION: '0.2' };
 
 DDMUG.Keys = {
 	L1 : 68,//D
@@ -63,7 +63,11 @@ DDMUG.Stage = function(parameters){
 		
 		_started = false,
 		_self = this,
-		_mode = parameters.mode !== undefined ? parameters.mode : DDMUG.Mode.Normal;
+		_mode = parameters.mode !== undefined ? parameters.mode : DDMUG.Mode.Normal,
+			
+		_trackWidth,
+		_hitAreaHeight, 
+		_dotHeight;
 
 	this.stageRender = _stageRender;
 	this.domElement = _stageRender.domElement;
@@ -77,20 +81,20 @@ DDMUG.Stage = function(parameters){
 		//var baseFrame = new DDMUG.Element({x: 0, y: 0, width: _width, height: _height});
 		//stageRender.addElement(baseFrame);
 
-		var trackWidth = _width / _trackNum;//轨道宽度
-		var hitAreaHeight = trackWidth/8;//有效hit区域高度
-		//var dotHeight = hitAreaHeight;//dot高度
+		_trackWidth = _width / _trackNum;//轨道宽度
+		_hitAreaHeight = _trackWidth/6;//有效hit区域高度
+		_dotHeight = _trackWidth/8;//dot高度
 
-		var L1 = new DDMUG.TrackElement({x: 0 + 0*trackWidth, y: 0, width: trackWidth, height: _height, keyTrack: DDMUG.Keys.L1, totalKeyTrack: _trackNum, hitAreaHeight: hitAreaHeight});
-		var L2 = new DDMUG.TrackElement({x: 0 + 1*trackWidth, y: 0, width: trackWidth, height: _height, keyTrack: DDMUG.Keys.L2, totalKeyTrack: _trackNum, hitAreaHeight: hitAreaHeight});
-		var R1 = new DDMUG.TrackElement({x: 0 + 2*trackWidth, y: 0, width: trackWidth, height: _height, keyTrack: DDMUG.Keys.R1, totalKeyTrack: _trackNum, hitAreaHeight: hitAreaHeight});
-		var R2 = new DDMUG.TrackElement({x: 0 + 3*trackWidth, y: 0, width: trackWidth, height: _height, keyTrack: DDMUG.Keys.R2, totalKeyTrack: _trackNum, hitAreaHeight: hitAreaHeight});
+		var L1 = new DDMUG.TrackElement({x: 0 + 0*_trackWidth, y: 0, width: _trackWidth, height: _height, keyTrack: DDMUG.Keys.L1, totalKeyTrack: _trackNum, hitAreaHeight: _hitAreaHeight});
+		var L2 = new DDMUG.TrackElement({x: 0 + 1*_trackWidth, y: 0, width: _trackWidth, height: _height, keyTrack: DDMUG.Keys.L2, totalKeyTrack: _trackNum, hitAreaHeight: _hitAreaHeight});
+		var R1 = new DDMUG.TrackElement({x: 0 + 2*_trackWidth, y: 0, width: _trackWidth, height: _height, keyTrack: DDMUG.Keys.R1, totalKeyTrack: _trackNum, hitAreaHeight: _hitAreaHeight});
+		var R2 = new DDMUG.TrackElement({x: 0 + 3*_trackWidth, y: 0, width: _trackWidth, height: _height, keyTrack: DDMUG.Keys.R2, totalKeyTrack: _trackNum, hitAreaHeight: _hitAreaHeight});
 		_stageRender.addElement(L1);
 		_stageRender.addElement(L2);
 		_stageRender.addElement(R1);
 		_stageRender.addElement(R2);
 
-		var _hud = new DDMUG.HudElement({x: 0, y: 0, width: _width, height: _height - hitAreaHeight});
+		var _hud = new DDMUG.HudElement({x: 0, y: 0, width: _width, height: _height - _hitAreaHeight});
 		this.hud = _hud;
 		_stageRender.addElement(_hud);
 	};
@@ -155,23 +159,24 @@ DDMUG.Stage = function(parameters){
 
 			var trackHeight = track.size.height;
 			var hitAreaHeight = track.hitAreaHeight;
+			var hitHeight = trackHeight - track.hitOffset;
 			var dotY = dot.position.y;
 
-			if(dotY < trackHeight - 2.5*hitAreaHeight && dotY > trackHeight - 3*hitAreaHeight)
+			if(dotY < hitHeight - 2.5*hitAreaHeight && dotY > hitHeight - 3*hitAreaHeight)
 				_rank = 'miss';
-			if(dotY < trackHeight - hitAreaHeight*3/2 && dotY > trackHeight - 2.5*hitAreaHeight)
+			if(dotY < hitHeight - hitAreaHeight*3/2 && dotY > hitHeight - 2.5*hitAreaHeight)
 				_rank = 'bad';
-			if(dotY < trackHeight - hitAreaHeight && dotY > trackHeight - hitAreaHeight*3/2)
+			if(dotY < hitHeight - hitAreaHeight && dotY > hitHeight - hitAreaHeight*3/2)
 				_rank = 'good';
-			if(Math.abs(dotY - (trackHeight - hitAreaHeight)) <= 3)
+			if(Math.abs(dotY - (hitHeight - hitAreaHeight)) <= 3)
 				_rank = 'perfect';
-			//console.log(Math.abs(dotY, trackHeight - hitAreaHeight))
-			if(dotY < trackHeight - hitAreaHeight/2 && dotY > trackHeight - hitAreaHeight)
+			//console.log(Math.abs(dotY, hitHeight - hitAreaHeight))
+			if(dotY < hitHeight - hitAreaHeight/2 && dotY > hitHeight - hitAreaHeight)
 				_rank = 'good';
-			//if(dotY < trackHeight && dotY > trackHeight - hitAreaHeight/2)
-			if(dotY < trackHeight + hitAreaHeight && dotY > trackHeight - hitAreaHeight/2)
+			//if(dotY < hitHeight && dotY > hitHeight - hitAreaHeight/2)
+			if(dotY < hitHeight + hitAreaHeight && dotY > hitHeight - hitAreaHeight/2)
 				_rank = 'bad';
-			//if(dotY > trackHeight)
+			//if(dotY > hitHeight)
 			//	_rank = 'miss';
 			if(_rank != null)//如果此次是有效敲击，记录该dot已经按过
 				dot.pressed = true;
@@ -243,6 +248,27 @@ DDMUG.Stage = function(parameters){
 		return nodeMap;
 	};
 
+
+	//是否为移动终端
+	var browser = {
+		versions: function() {
+			var u = navigator.userAgent,
+				app = navigator.appVersion;
+			return {
+				mac: u.indexOf('Mac') > -1,
+				windows: u.indexOf('Windows NT') > -1,
+				android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1,
+				iPhone: u.indexOf('iPhone') > -1
+			};
+		}(),
+		language: (navigator.browserLanguage || navigator.language).toLowerCase()
+	}
+	var _isMobile = browser.versions.android || browser.versions.iPhone;
+	Object.defineProperties( this, {
+		'isMobile': { set: function(value){ _isMobile = value; _valueUpdateTime = Date.now();}, get : function(){ return _isMobile; } }
+	} );
+
+
 	function bindMouseEvent(){
 		// calculate position of the canvas DOM element on the page 
 		var canvasPosition = { 
@@ -250,31 +276,15 @@ DDMUG.Stage = function(parameters){
 			y: _stageRender.domElement.offsetTop 
 		}; 
 
-		//增加在移动端的兼容性，主要问题是mouse事件要换成touch事件。
-		//是否为移动终端
-		var browser = {
-			versions: function() {
-				var u = navigator.userAgent,
-					app = navigator.appVersion;
-				return {
-					mac: u.indexOf('Mac') > -1,
-					windows: u.indexOf('Windows NT') > -1,
-					android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1,
-					iPhone: u.indexOf('iPhone') > -1
-				};
-			}(),
-			language: (navigator.browserLanguage || navigator.language).toLowerCase()
-		}
-		var isMobile = browser.versions.android || browser.versions.iPhone;
-		
+		//增加在移动端的兼容性，主要问题是mouse事件要换成touch事件。		
 		//这个和之前做colorpicker的时候不一样了，touchstart和touchend现在支持的不错，而且获取touch坐标的方法也不同了。
-		var mousemove =  isMobile ? 'touchmove' : 'mousemove' ;
-		var mouseup = isMobile ? 'touchend' : 'mouseup' ;
-		var mousedown = isMobile ? 'touchstart' : 'mousedown' ;
+		var mousemove =  _isMobile ? 'touchmove' : 'mousemove' ;
+		var mouseup = _isMobile ? 'touchend' : 'mouseup' ;
+		var mousedown = _isMobile ? 'touchstart' : 'mousedown' ;
 
 		_stageRender.domElement.addEventListener(mousedown, function(e){
 			e.preventDefault();
-			if(isMobile){
+			if(_isMobile){
 				for (var i=0; i < e.changedTouches.length; i++) { 
 					var touch = e.changedTouches[i];
 					var mouse = { 
@@ -303,7 +313,7 @@ DDMUG.Stage = function(parameters){
 
 		_stageRender.domElement.addEventListener(mouseup, function(e){
 			e.preventDefault();
-			if(isMobile){
+			if(_isMobile){
 				for (var i=0; i < e.changedTouches.length; i++) { 
 					var touch = e.changedTouches[i];
 					var mouse = { 
@@ -389,11 +399,13 @@ DDMUG.Stage = function(parameters){
 		return id;
 	};
 
-	var _startTime;
+	var _startTime,
+		_offsetTime;
 
 	/*主逻辑处理*/
 	this.logic = function(){
-		var currentTime = (_audio.currentTime - _startTime);//这个是音乐的播放时间s
+		
+		var currentTime = _audio.paused? (Date.now() - _startTime)/1000- _offsetTime:(_audio.currentTime );//这个是音乐的播放时间s
 
 		_stageRender.update();
 
@@ -417,23 +429,23 @@ DDMUG.Stage = function(parameters){
 		for(var i = 0; i < this.musicMap.length; i++){
 			if(this.musicMap[i].time > fetchTime) break;
 
-			var trackWidth = _width / _trackNum;
-			var dotHeight = trackWidth/8;
+			//var trackWidth = _width / _trackNum;
+			//var dotHeight = trackWidth/8;
 			_stageRender.addElement(new DDMUG.DotElement(
 				{	x: (function(key){
 							if(DDMUG.Keys.L1 == key)
-								return 0*trackWidth;
+								return 0*_trackWidth;
 							if(DDMUG.Keys.L2 == key)
-								return 1*trackWidth;
+								return 1*_trackWidth;
 							if(DDMUG.Keys.R1 == key)
-								return 2*trackWidth;
+								return 2*_trackWidth;
 							if(DDMUG.Keys.R2 == key)
-								return 3*trackWidth;						
+								return 3*_trackWidth;						
 						}(this.musicMap[i].position)), 
-					y: _height/_mode * (fetchTime - this.musicMap[i].time), 
+					y: (_height - _hitAreaHeight)/_mode * (fetchTime - this.musicMap[i].time), 
 					speedX: 0, 
-					speedY: _height/_mode/_logicFps, 
-					width: trackWidth, height: dotHeight, keyTrack: this.musicMap[i].position,
+					speedY: (_height - _hitAreaHeight)/_mode/_logicFps, 
+					width: _trackWidth, height: _dotHeight, keyTrack: this.musicMap[i].position,
 					//lifeTime : this.musicMap[i].time - currentTime}
 					lifeTime : (this.musicMap[i].time - currentTime) * _logicFps}
 
@@ -449,15 +461,30 @@ DDMUG.Stage = function(parameters){
 		if(!this.initialized) return;//未初始化完成，不能play
 		_stageRender.domElement.focus();
 
-		_startTime = _audio.currentTime;
-		_audio.play();
+		_startTime = Date.now()//记录按下开始按钮的时间，_audio.currentTime是当前播放到第几秒
+		_offsetTime = _mode - this.musicMap[0].time;
+		if(_offsetTime > 0) {
+			self.setTimeout(function(){
+				_audio.play();
+			}, 1000*_offsetTime);
+		}else{
+			_audio.play();
+		}
+
+		
 
 		//主逻辑循环
 		lastTime = 0;
 		var that = this;
-		( function doLogic(){
+		/*( function doLogic(){
 			that.logic();
 			_logicTimer = _logicLoop(doLogic, that);
+		} )();*/
+		//由于chrome 45版本之后，移动端settimeout的性能变差了，逻辑循环用settimeout会拖慢而且有用户输入的时候更加卡顿。因此换requestAnimationFrame
+
+		( function doLogic (){
+			that.logic();
+			_logicTimer = requestAnimationFrame(doLogic, that);
 		} )();
 
 		_playing = true;
@@ -476,7 +503,8 @@ DDMUG.Stage = function(parameters){
 		if(!_audio.paused) _audio.pause();
 
 		if(_logicTimer != null){
-			self.clearTimeout(_logicTimer);
+			self.cancelAnimationFrame(_logicTimer);
+			//self.clearTimeout(_logicTimer);
 			_logicTimer = null;
 		}
 		_stageRender.stop();
@@ -492,7 +520,8 @@ DDMUG.Stage = function(parameters){
 		if(!_audio.paused) _audio.pause();
 
 		if(_logicTimer != null){
-			self.clearTimeout(_logicTimer);
+			//self.clearTimeout(_logicTimer);
+			self.cancelAnimationFrame(_logicTimer);
 			_logicTimer = null;
 		}
 		_stageRender.stop();
@@ -506,9 +535,15 @@ DDMUG.Stage = function(parameters){
 		//主逻辑循环
 		lastTime = 0;
 		var that = this;
-		( function doLogic(){
+		/*( function doLogic(){
 			that.logic();
 			_logicTimer = _logicLoop(doLogic, that);
+		} )();*/
+
+
+		( function doLogic (){
+			that.logic();
+			_logicTimer = requestAnimationFrame(doLogic, that);
 		} )();
 
 		_stageRender.start();//启动渲染线程
@@ -690,6 +725,7 @@ DDMUG.TrackElement = function(parameters){
 	var _totalKeyTrack = parameters.totalKeyTrack !== undefined ? parameters.totalKeyTrack : 4;
 
 	this.hitAreaHeight = parameters.hitAreaHeight;
+	this.hitOffset = 2*this.hitAreaHeight;//距离底边2倍的hitAreaHeight
 	this.keyTrack = parameters.keyTrack;
 	this.pressed = false;
 
@@ -746,7 +782,8 @@ DDMUG.TrackElement = function(parameters){
 		ctx.fill();
 
 		//draw hit area
-		y = height-this.hitAreaHeight;
+		curve = 3;
+		y = height-this.hitAreaHeight-this.hitOffset;
 		height = this.hitAreaHeight;
 		ctx.beginPath();
 		ctx.moveTo(x + curve, y);
@@ -779,6 +816,8 @@ DDMUG.DotElement = function(parameters){
 	//var createTime = Date.now();
 
 	this.draw = function(ctx){
+		if(this.pressed) return;
+
 		ctx.save();
 		
 		var gap = 5;
