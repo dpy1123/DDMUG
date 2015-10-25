@@ -193,7 +193,10 @@ DDMUG.Stage = function(parameters){
 		var newAttr = document.createAttribute('tabindex');
 		newAttr.nodeValue = '0';
 		_stageRender.domElement.setAttributeNode(newAttr);
-		_stageRender.domElement.focus();
+		//_stageRender.domElement.focus();
+		_stageRender.domElement.addEventListener('mouseenter', function(e){
+			this.focus();
+		});
 
 		console.log('DDMUG.Stage.bindKey()');
 

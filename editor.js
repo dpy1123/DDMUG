@@ -55,7 +55,7 @@ DDMUG.Edioter = function(parameters){
 	parameters = parameters || {};
 
 	var _width = parameters.width !== undefined ? parameters.width : 400,
-		_height = parameters.height !== undefined ? parameters.height : 800,
+		_height = parameters.height !== undefined ? parameters.height : 302,
 		_trackNum = parameters.trackNum !== undefined ? parameters.trackNum : 4,
 		_stageRender = parameters.stageRender !== undefined ? parameters.stageRender : new DDMUG.StageRender(),
 
@@ -159,7 +159,9 @@ DDMUG.Edioter = function(parameters){
 		var newAttr = document.createAttribute('tabindex');
 		newAttr.nodeValue = '0';
 		_stageRender.domElement.setAttributeNode(newAttr);
-		_stageRender.domElement.focus();
+		_stageRender.domElement.addEventListener('mouseenter', function(e){
+			this.focus();
+		});
 
 		_stageRender.domElement.addEventListener('keydown', function(e){
 			var keyCode = e.which;
@@ -457,6 +459,7 @@ DDMUG.Pannel = function(parameters){
 
 	this.setBPM = function(bpm){//设置bpm
 		this.timeLine.bpm = bpm;
+		return this.timeLine.bpm;
 	}
 	
 	this.update = function(){
@@ -822,7 +825,7 @@ DDMUG.TimeLine = function(parameters){
 
 	var originalX = this.position.x;//未被移动前的x坐标，用于绘制clip path
 
-	this.bpm = 110;
+	this.bpm = 110;	
 
 	this.time = 0;//当前时间
 	this.timelineStart = parameters.timelineStart !== undefined ? parameters.timelineStart : 0;//开始时间 s
